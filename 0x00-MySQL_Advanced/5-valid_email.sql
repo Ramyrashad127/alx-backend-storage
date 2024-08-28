@@ -1,4 +1,5 @@
--- nw sql file
+-- new sql file
+DELIMITER $$ ;
 CREATE TRIGGER resets_email BEFORE UPDATE ON users
 FOR EACH ROW
 BEGIN
@@ -6,3 +7,4 @@ BEGIN
 		SET NEW.valid_email = 0;
 	END IF;
 END;
+DELIMITER ;
