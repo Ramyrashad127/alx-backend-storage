@@ -1,22 +1,33 @@
-import requests
+#!/usr/bin/env python3
+'''A module with tools for request caching and tracking.
+'''
 import redis
-from typing import Optional
+import requests
+from functools import wraps
+from typing import Callable
 
 
-r = redis.Redis(host='localhost', port=6379, db=0)
+redis_store = redis.Redis()
+"""intialize the redis instance."""
 
 
+def data_cacher(method: Callable) -> Callable:
+    """ data"""
+    @wraps(method)
+    def invoker(url) -> str:
+        """ wrapped"""
+        redis_store.incr(f'count:{url}')
+        result = redis_store.get(f'result:{url}')
+        if result:
+            return result.decode('utf-8')
+        result = method(url)
+        redis_store.set(f'count:{url}', 0)
+        redis_store.setex(f'result:{url}', 10, result)
+        return result
+    return invoker
+
+
+@data_cacher
 def get_page(url: str) -> str:
     """retrive data"""
-    count_key = f"count:{url}"
-    r.incr(count_key)
-    cache_key = f"cache:{url}"
-    cached_content = r.get(cache_key)
-    
-    if cached_content:
-        return cached_content.decode('utf-8')
-    response = requests.get(url)
-    page_content = response.text
-    r.setex(cache_key, 10, page_content)
-    
-    return page_content
+    return requests.get(url).text
