@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """ redis module"""
 
+
 import redis
 import uuid
 from typing import Union, Optional, Callable
 from functools import wraps
+
 
 def count_calls(method: Callable) -> Callable:
     """ count calls for cache"""
@@ -15,6 +17,7 @@ def count_calls(method: Callable) -> Callable:
         self._redis.incr(key)
         return method(self, *args, **kwargs)
     return wrapper
+
 
 def call_history(method: Callable) -> Callable:
     """history decorator"""
@@ -29,8 +32,10 @@ def call_history(method: Callable) -> Callable:
         return result
     return wrapper
 
+
 def replay(fn: Callable) -> None:
-    """replay redis history."""
+    '''replay history of redis.
+    '''
     if fn is None or not hasattr(fn, '__self__'):
         return
     redis_store = getattr(fn.__self__, '_redis', None)
@@ -52,6 +57,7 @@ def replay(fn: Callable) -> None:
             fxn_output,
         ))
 
+
 class Cache():
     """ cache class"""
     def __init__(self):
@@ -67,7 +73,9 @@ class Cache():
         self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Optional[Callable[[bytes], any]] = None) -> Optional[any]:
+    def get(
+            self, key: str,
+            fn: Optional[Callable[[bytes], any]] = None) -> Optional[any]:
         """base get method"""
         value = self._redis.get(key)
         if value is None:
@@ -78,7 +86,8 @@ class Cache():
 
     def get_str(self, key: str) -> Optional[str]:
         """convert o utf-8"""
-        return self.get(key, lambda x: x.decode('utf-8') if x is not None else None)
+        return self.get(
+            key, lambda x: x.decode('utf-8') if x is not None else None)
 
     def get_int(self, key: str) -> Optional[int]:
         """convert to int"""
